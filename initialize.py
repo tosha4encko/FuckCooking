@@ -1,9 +1,16 @@
 import json
 import pandas as pd
 import numpy as np
-
+from sklearn import cross_validation
 train = pd.read_json('./train.json')
 test = pd.read_json('./test.json')
+
+dict_cuisine = dict()
+ind = 0
+for cuisine in train.loc[:, 'cuisine']:
+    if not (cuisine in dict_cuisine.keys()):
+        dict_cuisine[cuisine] = ind
+        ind += 1
 
 #Создает предикаты для тех ингридиентов, частота вхождения которых удовлетворяет lower_bounds и upper_bounds
 def create_subParams(df, count_all_class:int, lower_bounds: int, upper_bounds: int):
@@ -49,3 +56,15 @@ def create_subData(count_one_cuisine:int):
             break
     return np.hstack([res_dict[key] for key in res_dict.keys()])
 
+from hashlib import sha1
+def hash_data(hash_obj, hash_func=sha1):
+    if isinstance(hash_obj, list):
+        return list(map(lambda ingredient: hash_func(ingredient.encode()).hexdigest(), hash_obj))
+    if isinstance(hash_obj, str):
+        return hash_func(hash_obj.encoding.hexdigest())
+                         
+def my_cross_val_score(classifier, data, labels, cv=5):
+    lrc_ridge_scoring1 = cross_validation.cross_val_score(classifier, data, labels,
+                                                      scoring='f1_weighted', cv = cv)
+    print('lrc --  mean:{}, max:{}, min:{}, std:{}'.format(lrc_ridge_scoring1.mean(), lrc_ridge_scoring1.max(),
+                                                     lrc_ridge_scoring1.min(), lrc_ridge_scoring1.std()))
